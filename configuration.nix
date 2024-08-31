@@ -64,11 +64,20 @@
     nssmdns = true;  # Enable mDNS support in NSS
   };
 
+
+  #try to control kde log spam
+  services.rsyslogd = {
+  enable = true;
+  extraConfig = ''
+    :msg, contains, "kpipewire_logging" stop
+  '';
+};
+
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = true;
+  hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
-    enable = false;
+    enable = true;
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
@@ -79,6 +88,9 @@
     # no need to redefine it in your config for now)
     #media-session.enable = true;
   };
+
+##try stacking low latency pulse for pW
+# this didnt work btw, the real solution is $ export PULSE_LATENCY_MSEC=20
 
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
@@ -149,6 +161,8 @@
     libreoffice
     gimp
     fsearch
+    libnotify
+    betterbird
   ];
 
     xdg.mime.defaultApplications = {
@@ -186,6 +200,7 @@
     libpulseaudio
     winePackages.unstableFull
     libxcrypt
+    libnotify
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
