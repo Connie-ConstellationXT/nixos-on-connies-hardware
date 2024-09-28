@@ -14,6 +14,8 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -52,8 +54,8 @@
 
   # Configure keymap in X11
   services.xserver = {
-    layout = "us";
-    xkbVariant = "";
+    xkb.layout = "us";
+    xkb.variant = "";
   };
 
   # Enable CUPS to print documents.
@@ -61,7 +63,7 @@
 
     services.avahi = {
     enable = true;
-    nssmdns = true;  # Enable mDNS support in NSS
+    nssmdns4 = true;  # Enable mDNS support in NSS
   };
 
 
@@ -108,11 +110,14 @@
 
   # Install firefox.
   programs.firefox.enable = true;
+
+  # install steam
   programs.steam.enable = true;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-
+  #enable flatpak
+  services.flatpak.enable = true;
 
   nix.settings.experimental-features = [
     "nix-command"
@@ -122,6 +127,7 @@
     nixpkgs.overlays = [
     (self: super: {
       nomachine-client = pkgs.callPackage /home/conneh/actual/development/nix/nomachine-client/default.nix {};
+      vban = pkgs.callPackage "/home/conneh/actual/development/nix/vban-git ater/default.nix" {};
     })
   ];
 
@@ -131,9 +137,11 @@
   environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   #  wget
+    noto-fonts-cjk
     libsForQt5.qt5.qttools
     vscode
     python3
+    python311Packages.pip
     chromium
     hyfetch #make the ricing gayer
     discord #irc+teamspeak, but bourgeois
@@ -155,7 +163,6 @@
     skanlite
     pdfarranger
     onboard
-    libsForQt5.kmail
     google-chrome # i have completely given up on maintaining control over my browsing experience
     k4dirstat #i am a disorderly person
     libreoffice
@@ -163,6 +170,24 @@
     fsearch
     libnotify
     betterbird
+    gnome.gnome-software #for flatpaks
+    kdePackages.partitionmanager
+    efibootmgr
+    revolt-desktop
+    freefilesync
+    lm_sensors
+    btop
+    pioneer
+    evolution
+    evolution-ews
+    mission-center
+    meld
+    openrgb
+    element-desktop
+    moltengamepad
+    xboxdrv
+    speedcrunch
+    vban
   ];
 
     xdg.mime.defaultApplications = {
@@ -201,7 +226,16 @@
     winePackages.unstableFull
     libxcrypt
     libnotify
+    noto-fonts-cjk
   ];
+
+    systemd.services.flatpak-repo = {
+    wantedBy = [ "multi-user.target" ];
+    path = [ pkgs.flatpak ];
+    script = ''
+      flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+    '';
+  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -221,6 +255,11 @@
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
+
+## try enable cpufreq govnah
+  boot.kernelModules = [ 
+    "cpufreq_conservative"  # Conservative governor
+  ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
