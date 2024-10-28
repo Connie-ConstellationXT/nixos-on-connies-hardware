@@ -16,6 +16,8 @@
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  zramSwap.enable = true; #changed: tried to enabled zram
+
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -64,6 +66,7 @@
     services.avahi = {
     enable = true;
     nssmdns4 = true;  # Enable mDNS support in NSS
+    publish.userServices = true;
   };
 
 
@@ -77,7 +80,7 @@
 
   # Enable sound with pipewire.
   hardware.pulseaudio.enable = false;
-  security.rtkit.enable = true;
+  security.rtkit.enable = true; #changed: tried disabling this to better handle memory pressure situations
   services.pipewire = {
     enable = true;
     alsa.enable = true;
@@ -119,6 +122,13 @@
   #enable flatpak
   services.flatpak.enable = true;
 
+  #enable docker
+  virtualisation.docker.enable = true;
+  virtualisation.docker.rootless = {
+  enable = true;
+  setSocketVariable = true;
+};
+
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"
@@ -128,6 +138,7 @@
     (self: super: {
       nomachine-client = pkgs.callPackage /home/conneh/actual/development/nix/nomachine-client/default.nix {};
       vban = pkgs.callPackage "/home/conneh/actual/development/nix/vban-git ater/default.nix" {};
+      appmenu-gtk-module = pkgs.callPackage "/home/conneh/actual/development/nix/appmenu-gtk3-module/default.nix" {};
     })
   ];
 
@@ -139,7 +150,10 @@
   #  wget
     noto-fonts-cjk
     libsForQt5.qt5.qttools
+    #gtk3 ## didnt work i guess
+    maliit-keyboard
     vscode
+    git
     python3
     python311Packages.pip
     chromium
@@ -156,15 +170,15 @@
     telegram-desktop
     nomachine-client #i only pretend to have migrated away from windows
     keepassxc
-    htop #my session is such a mess i run out of resources that i can't even run systemmonitor GUI
+    htop
     pidgin
     clementine
     vlc
     skanlite
     pdfarranger
     onboard
-    google-chrome # i have completely given up on maintaining control over my browsing experience
-    k4dirstat #i am a disorderly person
+    google-chrome
+    k4dirstat
     libreoffice
     gimp
     fsearch
@@ -184,10 +198,24 @@
     meld
     openrgb
     element-desktop
-    moltengamepad
+    moltengamepad #havent used this much
     xboxdrv
     speedcrunch
     vban
+    unityhub
+    icu  # java
+    dotnet-sdk
+    openjdk
+    maven
+    jetbrains.rider
+    jetbrains.idea-community # maybe remove
+    lact #radeon-profile
+    linuxKernel.packages.linux_6_11.hid-tmff2
+    input-utils
+    android-tools  # should contain adb that one of my flatpaks needs
+    dbeaver-bin
+    cargo #should be in devshells
+    plasma-hud
   ];
 
     xdg.mime.defaultApplications = {
@@ -197,6 +225,14 @@
     "application/xhtml+xml" = "waterfox-modern.desktop";
     "x-scheme-handler/http" = "waterfox-modern.desktop";
     "x-scheme-handler/https" = "waterfox-modern.desktop";
+  };
+
+    xdg.portal = {
+
+    enable = true;
+
+    xdgOpenUsePortal = true;
+
   };
 
   programs.nix-ld.enable = true;
@@ -227,7 +263,16 @@
     libxcrypt
     libnotify
     noto-fonts-cjk
+    icu
+    dotnet-sdk
   ];
+
+  environment.sessionVariables = {
+  DOTNET_ROOT = "${pkgs.dotnet-sdk}"; # this may not have worked
+  HISTIGNORE="*-openjdk-*";
+};
+
+
 
     systemd.services.flatpak-repo = {
     wantedBy = [ "multi-user.target" ];
@@ -236,6 +281,11 @@
       flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     '';
   };
+
+  services.mysql = {
+  enable = true;
+  package = pkgs.mariadb;
+};
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
