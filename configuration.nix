@@ -49,6 +49,17 @@
   # Enable the X11 windowing system.
   # You can disable this if you're only using the Wayland session.
   services.xserver.enable = true;
+  services.xserver.videoDrivers = [ "amdgpu" ];
+  hardware.opengl.driSupport32Bit = true;
+  hardware.opengl.extraPackages = with pkgs; [
+  amdvlk
+];
+# For 32 bit applications
+hardware.opengl.extraPackages32 = with pkgs; [
+  driversi686Linux.amdvlk
+];
+
+
 
   # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
@@ -87,7 +98,7 @@
     alsa.support32Bit = true;
     pulse.enable = true;
     # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
+    jack.enable = true;
 
     # use the example session manager (no others are packaged yet so this is enabled by default,
     # no need to redefine it in your config for now)
@@ -156,9 +167,11 @@
     git
     python3
     python311Packages.pip
+    appimage-run
     chromium
     hyfetch #make the ricing gayer
-    discord #irc+teamspeak, but bourgeois
+    vesktop #irc+teamspeak, but bourgeois
+    discord-canary
     brave
     teamspeak_client
     moonlight-qt
@@ -170,20 +183,20 @@
     telegram-desktop
     nomachine-client #i only pretend to have migrated away from windows
     keepassxc
-    htop
+    htop #my session is such a mess i run out of resources that i can't even run systemmonitor GUI
     pidgin
     clementine
     vlc
     skanlite
     pdfarranger
     onboard
-    google-chrome
-    k4dirstat
+    google-chrome # i have completely given up on maintaining control over my browsing experience
+    k4dirstat #i am a disorderly person
     libreoffice
     gimp
     fsearch
     libnotify
-    betterbird
+    #betterbird #disabled because CVE
     gnome.gnome-software #for flatpaks
     kdePackages.partitionmanager
     efibootmgr
@@ -200,6 +213,7 @@
     element-desktop
     moltengamepad #havent used this much
     xboxdrv
+    antimicrox
     speedcrunch
     vban
     unityhub
@@ -209,6 +223,7 @@
     maven
     jetbrains.rider
     jetbrains.idea-community # maybe remove
+    scenebuilder
     lact #radeon-profile
     linuxKernel.packages.linux_6_11.hid-tmff2
     input-utils
@@ -216,6 +231,12 @@
     dbeaver-bin
     cargo #should be in devshells
     plasma-hud
+    #libappindicator-gtk3 # i think this didnt solve the problem
+    #libappindicator-gtk2 # i think this didnt solve the problem
+    #appmenu-gtk-module
+    xorg.libXxf86vm
+    bottles
+    audacity
   ];
 
     xdg.mime.defaultApplications = {
@@ -265,6 +286,7 @@
     noto-fonts-cjk
     icu
     dotnet-sdk
+    xorg.libXxf86vm # for java fx
   ];
 
   environment.sessionVariables = {
