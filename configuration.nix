@@ -13,10 +13,14 @@
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.blacklistedKernelModules = ["xpad"];
+  boot.kernel.sysctl = {
+    "vm.min_free_kbytes" = "819200"; # 800 MB in kilobytes
+  };
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  zramSwap.enable = true; #changed: tried to enabled zram
+  #zramSwap.enable = true; #changed: tried to enabled zram
 
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -50,16 +54,17 @@
   # You can disable this if you're only using the Wayland session.
   services.xserver.enable = true;
   services.xserver.videoDrivers = [ "amdgpu" ];
-  hardware.opengl.driSupport32Bit = true;
-  hardware.opengl.extraPackages = with pkgs; [
-  amdvlk
+  hardware.graphics.enable32Bit = true;
+  hardware.graphics.extraPackages = with pkgs; [
+  #amdvlk #disabled for steamvr??
+  openhmd
+  openvr
 ];
 # For 32 bit applications
-hardware.opengl.extraPackages32 = with pkgs; [
+hardware.graphics.extraPackages32 = with pkgs; [
   driversi686Linux.amdvlk
 ];
-
-
+  hardware.steam-hardware.enable = true; ##maybe deprecated?
 
   # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
@@ -150,8 +155,23 @@ hardware.opengl.extraPackages32 = with pkgs; [
       nomachine-client = pkgs.callPackage /home/conneh/actual/development/nix/nomachine-client/default.nix {};
       vban = pkgs.callPackage "/home/conneh/actual/development/nix/vban-git ater/default.nix" {};
       appmenu-gtk-module = pkgs.callPackage "/home/conneh/actual/development/nix/appmenu-gtk3-module/default.nix" {};
+      yt-unshittify = pkgs.callPackage "/etc/nixos/conneh-custom/default.nix" {};
+      r2modman = pkgs.callPackage "/etc/nixos/r2modman/package.nix" {};
+      cttmff2 = pkgs.callPackage "/etc/nixos/thrustmaster-drivers/default.nix" {
+        kernel = pkgs.linuxPackages.kernel;
+        kernelModuleMakeFlags = pkgs.linuxPackages.kernelModuleMakeFlags;
+      };
     })
   ];
+
+
+
+
+  nixpkgs.config.permittedInsecurePackages = [
+    "dotnet-sdk-wrapped-7.0.410"
+    "dotnet-sdk-6.0.428"
+  ];
+
 
 
   # List packages installed in system profile. To search, run:
@@ -159,7 +179,7 @@ hardware.opengl.extraPackages32 = with pkgs; [
   environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   #  wget
-    noto-fonts-cjk
+    noto-fonts-cjk-sans
     libsForQt5.qt5.qttools
     #gtk3 ## didnt work i guess
     maliit-keyboard
@@ -171,7 +191,7 @@ hardware.opengl.extraPackages32 = with pkgs; [
     chromium
     hyfetch #make the ricing gayer
     vesktop #irc+teamspeak, but bourgeois
-    discord-canary
+    discord
     brave
     teamspeak_client
     moonlight-qt
@@ -197,7 +217,7 @@ hardware.opengl.extraPackages32 = with pkgs; [
     fsearch
     libnotify
     #betterbird #disabled because CVE
-    gnome.gnome-software #for flatpaks
+    gnome-software #for flatpaks
     kdePackages.partitionmanager
     efibootmgr
     revolt-desktop
@@ -219,14 +239,18 @@ hardware.opengl.extraPackages32 = with pkgs; [
     unityhub
     icu  # java
     dotnet-sdk
+    dotnet-ef
     openjdk
     maven
-    jetbrains.rider
-    jetbrains.idea-community # maybe remove
+    godot_4
+    godot_4-mono
+    #jetbrains.rider # insecure dependency??
+    jetbrains.idea-community # insecuire dependency?? # maybe remove
     scenebuilder
     lact #radeon-profile
-    linuxKernel.packages.linux_6_11.hid-tmff2
-    input-utils
+    #linuxKernel.packages.linux_6_12.hid-tmff2 # thrustmaster pedals
+    cttmff2
+    #input-utils #deprecated
     android-tools  # should contain adb that one of my flatpaks needs
     dbeaver-bin
     cargo #should be in devshells
@@ -237,6 +261,18 @@ hardware.opengl.extraPackages32 = with pkgs; [
     xorg.libXxf86vm
     bottles
     audacity
+    yt-unshittify
+    r2modman
+    prismlauncher
+    input-remapper
+    kdenlive
+    libcap ##maybe for steamvr
+    usbutils
+    wlx-overlay-s
+
+    vulkan-loader
+    vulkan-tools
+    spirv-tools
   ];
 
     xdg.mime.defaultApplications = {
@@ -283,10 +319,16 @@ hardware.opengl.extraPackages32 = with pkgs; [
     winePackages.unstableFull
     libxcrypt
     libnotify
-    noto-fonts-cjk
+    noto-fonts-cjk-sans
     icu
     dotnet-sdk
+    dotnet-ef
+    mono
+    godot_4
+    godot_4-mono
     xorg.libXxf86vm # for java fx
+    libcap # for steamvr??
+    usbutils # for steam??
   ];
 
   environment.sessionVariables = {
@@ -332,6 +374,10 @@ hardware.opengl.extraPackages32 = with pkgs; [
   boot.kernelModules = [ 
     "cpufreq_conservative"  # Conservative governor
   ];
+
+  boot.kernelParams = [
+    "kernel.dmesg_restrict=0" ]; # might not have worked
+
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
