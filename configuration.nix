@@ -95,7 +95,7 @@ hardware.graphics.extraPackages32 = with pkgs; [
 };
 
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true; #changed: tried disabling this to better handle memory pressure situations
   services.pipewire = {
     enable = true;
@@ -139,11 +139,11 @@ hardware.graphics.extraPackages32 = with pkgs; [
   services.flatpak.enable = true;
 
   #enable docker
-  virtualisation.docker.enable = true;
-  virtualisation.docker.rootless = {
-  enable = true;
-  setSocketVariable = true;
-};
+#   virtualisation.docker.enable = true;
+#   virtualisation.docker.rootless = {
+#   enable = true;
+#   setSocketVariable = true;
+# };
 
   nix.settings.experimental-features = [
     "nix-command"
@@ -207,7 +207,9 @@ hardware.graphics.extraPackages32 = with pkgs; [
     pidgin
     clementine
     vlc
-    skanlite
+    kdePackages.skanlite
+    kdePackages.partitionmanager
+    kdePackages.kdenlive
     pdfarranger
     onboard
     google-chrome # i have completely given up on maintaining control over my browsing experience
@@ -218,7 +220,7 @@ hardware.graphics.extraPackages32 = with pkgs; [
     libnotify
     #betterbird #disabled because CVE
     gnome-software #for flatpaks
-    kdePackages.partitionmanager
+
     efibootmgr
     revolt-desktop
     freefilesync
@@ -232,7 +234,7 @@ hardware.graphics.extraPackages32 = with pkgs; [
     openrgb
     element-desktop
     moltengamepad #havent used this much
-    xboxdrv
+    #xboxdrv
     antimicrox
     speedcrunch
     vban
@@ -242,8 +244,10 @@ hardware.graphics.extraPackages32 = with pkgs; [
     dotnet-ef
     openjdk
     maven
-    godot_4
-    godot_4-mono
+
+    #godot_4
+    #godot_4-mono # godot silenced until this shit doesnt recombile on every nix rebuild
+
     #jetbrains.rider # insecure dependency??
     jetbrains.idea-community # insecuire dependency?? # maybe remove
     scenebuilder
@@ -265,14 +269,16 @@ hardware.graphics.extraPackages32 = with pkgs; [
     r2modman
     prismlauncher
     input-remapper
-    kdenlive
     libcap ##maybe for steamvr
     usbutils
-    wlx-overlay-s
+    #wlx-overlay-s #silenced because of update error
 
     vulkan-loader
     vulkan-tools
-    spirv-tools
+    alsa-utils
+    # spirv-tools #silenced because i forgot what this does
+    #makima
+    linuxKernel.packages.linux_6_14.hid-tmff2
   ];
 
     xdg.mime.defaultApplications = {
@@ -302,11 +308,9 @@ hardware.graphics.extraPackages32 = with pkgs; [
     libGL
     libdrm
     xorg.libxcb
-    libstdcxx5
     harfbuzz
     harfbuzzFull
     gcc
-    libstdcxx5
     gtk3
     gtk3-x11
     alsa-lib-with-plugins
@@ -379,6 +383,15 @@ hardware.graphics.extraPackages32 = with pkgs; [
     "kernel.dmesg_restrict=0" ]; # might not have worked
 
 
+  services.udev.extraRules = ''
+    # Fix Thrustmaster T-Rudder pedals not detected as joystick
+    ATTRS{idVendor}=="044f", ATTRS{idProduct}=="b679", ENV{ID_INPUT_JOYSTICK}="1"
+
+     KERNEL=="js[0-9]*", ATTRS{idVendor}=="044f", ATTRS{idProduct}=="b679", SYMLINK+="input/by-id/thrustmaster-t-rudder"
+  '';
+
+
+nix.settings.download-buffer-size = 524288000;
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
